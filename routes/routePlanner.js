@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-// Function to generate circular routes around user location
+// Function to generate circular routes that start and end at user location
 function generateCircularRoute(center, radiusKm, numPoints = 12) {
   const routes = [];
   
@@ -12,8 +12,12 @@ function generateCircularRoute(center, radiusKm, numPoints = 12) {
   for (let i = 0; i < 3; i++) {
     const coordinates = [];
     const angleOffset = i * 120; // 120 degrees apart for better distribution
+    
+    // Always start at user's location
+    coordinates.push({ lat: center.lat, lng: center.lng });
 
-    for (let j = 0; j <= numPoints; j++) {
+    // Generate circular path points
+    for (let j = 1; j <= numPoints; j++) {
       const angle = (2 * Math.PI * j) / numPoints + (angleOffset * Math.PI / 180);
       
       // Calculate offset in degrees
@@ -25,18 +29,23 @@ function generateCircularRoute(center, radiusKm, numPoints = 12) {
 
       coordinates.push({ lat, lng });
     }
+    
+    // Always end back at user's location to complete the loop
+    coordinates.push({ lat: center.lat, lng: center.lng });
 
     routes.push({
       id: i + 1,
       coordinates,
-      checkInPOI: `Viewpoint #${i + 1}`,
+      checkInPOI: `Circular Route #${i + 1}`,
+      distance: `${radiusKm * 2 * Math.PI} km (approx)`,
+      description: `Circular route starting and ending at your location`
     });
   }
 
   return routes;
 }
 
-// Function to generate linear routes from user location
+// Function to generate linear routes that start and end at user location
 function generateLinearRoutes(center, distanceKm) {
   const fakePOIs = ['Park View', 'City Square', 'Lake Side', 'Hill Point', 'River Trail'];
   
@@ -47,21 +56,23 @@ function generateLinearRoutes(center, distanceKm) {
   const routes = [0, 90, 180].map((angle, i) => {
     const rad = angle * (Math.PI / 180);
     
-    // Calculate the midpoint of the route
-    const latOffset = (distanceKm / 2) * Math.sin(rad) * kmToLatDeg;
-    const lngOffset = (distanceKm / 2) * Math.cos(rad) * kmToLngDeg;
+    // Calculate the destination point
+    const latOffset = distanceKm * Math.sin(rad) * kmToLatDeg;
+    const lngOffset = distanceKm * Math.cos(rad) * kmToLngDeg;
 
-    const midLat = center.lat + latOffset;
-    const midLng = center.lng + lngOffset;
+    const destLat = center.lat + latOffset;
+    const destLng = center.lng + lngOffset;
 
     return {
       id: i + 1,
       checkInPOI: fakePOIs[i] || `POI #${i + 1}`,
       coordinates: [
-        { lat: center.lat, lng: center.lng }, // Start at user location
-        { lat: midLat, lng: midLng },         // Midpoint
-        { lat: center.lat, lng: center.lng }  // Return to start
-      ]
+        { lat: center.lat, lng: center.lng }, // Start at your location
+        { lat: destLat, lng: destLng },       // Go to destination
+        { lat: center.lat, lng: center.lng }  // Return to your location
+      ],
+      distance: `${distanceKm * 2} km (round trip)`,
+      description: `Linear route starting and ending at your location`
     };
   });
 
