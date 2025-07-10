@@ -21,5 +21,8 @@ app.use('/api/track', trackRoutes);
 const plannerRoutes = require('./routes/routePlanner');
 app.use('/api/routes', plannerRoutes);
 
+const runRoutes = require('./routes/run');
+app.use('/api/run', runRoutes);
+
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
