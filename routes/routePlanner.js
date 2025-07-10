@@ -6,28 +6,26 @@ const router = express.Router();
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || 'AIzaSyAsVf-rZCQmjfEK0_Al8JQLQGvDvqm4KGw';
 
 // Generate strategic waypoints for Google Maps routing
-function generateCircularWaypoints(center, radiusKm) {
+function generateCircularWaypoints(center, targetDistanceKm) {
   const waypoints = [];
-  const numWaypoints = 4; // Fewer waypoints work better with Google Directions API
-  
+  const numWaypoints = 6; // more points = smoother circle
+  const radiusKm = targetDistanceKm / (2 * Math.PI); // accurate circle radius
+
   const kmToLatDeg = 1 / 110.574;
   const kmToLngDeg = 1 / (111.320 * Math.cos(center.lat * Math.PI / 180));
 
-  // Generate waypoints around the circle
   for (let i = 0; i < numWaypoints; i++) {
     const angle = (2 * Math.PI * i) / numWaypoints;
-    
-    // Vary the radius to make routes more interesting
-    const currentRadius = radiusKm * (0.7 + Math.random() * 0.6);
-    
-    const lat = center.lat + currentRadius * Math.sin(angle) * kmToLatDeg;
-    const lng = center.lng + currentRadius * Math.cos(angle) * kmToLngDeg;
-    
+
+    const lat = center.lat + radiusKm * Math.sin(angle) * kmToLatDeg;
+    const lng = center.lng + radiusKm * Math.cos(angle) * kmToLngDeg;
+
     waypoints.push({ lat, lng });
   }
 
   return waypoints;
 }
+
 
 // Get actual runnable routes using Google Maps Directions API
 async function getGoogleMapsRoutes(center, targetDistance) {
